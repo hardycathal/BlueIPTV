@@ -1,0 +1,123 @@
+diff --git a/node_modules/react-native-vlc-media-player/VLCPlayer.js b/node_modules/react-native-vlc-media-player/VLCPlayer.js
+index 9b91442..9c53165 100644
+--- a/node_modules/react-native-vlc-media-player/VLCPlayer.js
++++ b/node_modules/react-native-vlc-media-player/VLCPlayer.js
+@@ -234,6 +234,7 @@ export default class VLCPlayer extends Component {
+ VLCPlayer.propTypes = {
+   /* Native only */
+   rate: PropTypes.number,
++  subtitleDelay: PropTypes.number,
+   seek: PropTypes.number,
+   resume: PropTypes.bool,
+   paused: PropTypes.bool,
+diff --git a/node_modules/react-native-vlc-media-player/android/src/main/java/com/yuanzhou/vlc/vlcplayer/ReactVlcPlayerView.java b/node_modules/react-native-vlc-media-player/android/src/main/java/com/yuanzhou/vlc/vlcplayer/ReactVlcPlayerView.java
+index 8c7acdf..ee994da 100644
+--- a/node_modules/react-native-vlc-media-player/android/src/main/java/com/yuanzhou/vlc/vlcplayer/ReactVlcPlayerView.java
++++ b/node_modules/react-native-vlc-media-player/android/src/main/java/com/yuanzhou/vlc/vlcplayer/ReactVlcPlayerView.java
+@@ -117,15 +117,19 @@ class ReactVlcPlayerView extends TextureView implements
+ 
+     @Override
+     public void onHostResume() {
+-        if (mMediaPlayer != null && isSurfaceViewDestory && isHostPaused) {
+-            IVLCVout vlcOut = mMediaPlayer.getVLCVout();
+-            if (!vlcOut.areViewsAttached()) {
+-                // vlcOut.setVideoSurface(this.getHolder().getSurface(), this.getHolder());
+-                vlcOut.attachViews(onNewVideoLayoutListener);
+-                isSurfaceViewDestory = false;
+-                isPaused = false;
+-                // this.getHolder().setKeepScreenOn(true);
+-                mMediaPlayer.play();
++        if (mMediaPlayer != null && !mMediaPlayer.isReleased() && isSurfaceViewDestory && isHostPaused) {
++            try {
++                IVLCVout vlcOut = mMediaPlayer.getVLCVout();
++                if (!vlcOut.areViewsAttached()) {
++                    // vlcOut.setVideoSurface(this.getHolder().getSurface(), this.getHolder());
++                    vlcOut.attachViews(onNewVideoLayoutListener);
++                    isSurfaceViewDestory = false;
++                    isPaused = false;
++                    // this.getHolder().setKeepScreenOn(true);
++                    mMediaPlayer.play();
++                }
++            } catch (Exception e) {
++                Log.w("onHostResume", "resume failed: " + e.getMessage());
+             }
+         }
+     }
+@@ -133,10 +137,15 @@ class ReactVlcPlayerView extends TextureView implements
+ 
+     @Override
+     public void onHostPause() {
+-        if (!isPaused && mMediaPlayer != null) {
++        if (!isPaused && mMediaPlayer != null && !mMediaPlayer.isReleased()) {
+             isPaused = true;
+             isHostPaused = true;
+-            mMediaPlayer.pause();
++            try {
++                mMediaPlayer.pause();
++            } catch (Exception e) {
++                // native player already gone (e.g. entering picture-in-picture)
++                Log.w("onHostPause", "pause failed: " + e.getMessage());
++            }
+             // this.getHolder().setKeepScreenOn(false);
+             WritableMap map = Arguments.createMap();
+             map.putString("type", "Paused");
+@@ -344,12 +353,22 @@ class ReactVlcPlayerView extends TextureView implements
+         audioManager.abandonAudioFocus(this);
+     }
+ 
++    private void requestPlaybackAudioFocus() {
++        int result = audioManager.requestAudioFocus(
++                this,
++                AudioManager.STREAM_MUSIC,
++                AudioManager.AUDIOFOCUS_GAIN
++        );
++        Log.i(TAG, "requestAudioFocus result=" + result);
++    }
++
+     private void createPlayer(boolean autoplayResume, boolean isResume) {
+         releasePlayer();
+         if (this.getSurfaceTexture() == null) {
+             return;
+         }
+         try {
++            requestPlaybackAudioFocus();
+             final ArrayList<String> cOptions = new ArrayList<>();
+             String uriString = srcMap.hasKey("uri") ? srcMap.getString("uri") : null;
+             //String extension = srcMap.hasKey("type") ? srcMap.getString("type") : null;
+@@ -705,6 +724,12 @@ class ReactVlcPlayerView extends TextureView implements
+         }
+     }
+ 
++    public void setSubtitleDelay(float delayMs) {
++        if (mMediaPlayer != null) {
++            mMediaPlayer.setSpuDelay((long) (delayMs * 1000));
++        }
++    }
++
+     public void startRecording(String recordingPath) {
+         if(mMediaPlayer == null) return;
+         if(recordingPath != null) {
+diff --git a/node_modules/react-native-vlc-media-player/android/src/main/java/com/yuanzhou/vlc/vlcplayer/ReactVlcPlayerViewManager.java b/node_modules/react-native-vlc-media-player/android/src/main/java/com/yuanzhou/vlc/vlcplayer/ReactVlcPlayerViewManager.java
+index b935a4d..271ab91 100644
+--- a/node_modules/react-native-vlc-media-player/android/src/main/java/com/yuanzhou/vlc/vlcplayer/ReactVlcPlayerViewManager.java
++++ b/node_modules/react-native-vlc-media-player/android/src/main/java/com/yuanzhou/vlc/vlcplayer/ReactVlcPlayerViewManager.java
+@@ -36,6 +36,7 @@ public class ReactVlcPlayerViewManager extends SimpleViewManager<ReactVlcPlayerV
+     private static final String PROP_CLEAR = "clear";
+     private static final String PROP_PROGRESS_UPDATE_INTERVAL = "progressUpdateInterval";
+     private static final String PROP_TEXT_TRACK = "textTrack";
++    private static final String PROP_SUBTITLE_DELAY = "subtitleDelay";
+     private static final String PROP_AUDIO_TRACK = "audioTrack";
+     private static final String PROP_RECORDING_PATH = "recordingPath";
+     private static final String PROP_ACCEPT_INVALID_CERTIFICATES = "acceptInvalidCertificates";
+@@ -153,6 +154,11 @@ public class ReactVlcPlayerViewManager extends SimpleViewManager<ReactVlcPlayerV
+         videoView.setTextTrack(textTrack);
+     }
+ 
++    @ReactProp(name = PROP_SUBTITLE_DELAY, defaultFloat = 0f)
++    public void setSubtitleDelay(final ReactVlcPlayerView videoView, final float delayMs) {
++        videoView.setSubtitleDelay(delayMs);
++    }
++
+     @ReactProp(name = PROP_ACCEPT_INVALID_CERTIFICATES, defaultBoolean = false)
+     public void setAcceptInvalidCertificates(final ReactVlcPlayerView videoView, final boolean accept) {
+         videoView.setAcceptInvalidCertificates(accept);
