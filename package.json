@@ -1,6 +1,7 @@
 {
-  "name": "iptv-app",
+  "name": "blueiptv",
   "version": "1.0.0",
+  "description": "Client-side Android IPTV player. Mirrors an Xtream Codes or M3U provider catalogue into on-device SQLite and plays streams through a patched libVLC backend.",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
