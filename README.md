@@ -361,7 +361,6 @@ patches/               Upstream libVLC wrapper fixes
 
 Cathal Hardy — BEng (Hons) Software & Electronic Engineering, Atlantic Technological University
 
-<!-- Add your LinkedIn URL here if you want it findable. -->
 
 ## Licence
 

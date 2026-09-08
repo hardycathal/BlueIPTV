@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Install, patch and parse
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify upstream patches applied cleanly
+        run: npx patch-package --error-on-fail
+
+      - name: Static parse check
+        run: |
+          npm install --no-save @babel/parser
+          node scripts/parse-check.mjs
