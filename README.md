@@ -1,8 +1,8 @@
 # BlueIPTV
 
 An Android IPTV player built with React Native and Expo, targeting tablets and phones in
-landscape. It connects to a user's own IPTV provider — an **Xtream Codes** account or a plain
-**M3U playlist** — mirrors that provider's catalogue into on-device **SQLite**, and plays streams
+landscape. It connects to a user's own IPTV provider (an **Xtream Codes** account or a plain
+**M3U playlist**), mirrors that provider's catalogue into on-device **SQLite**, and plays streams
 through a patched **libVLC** backend.
 
 The defining decision is that the app is **fully client-side**. There is no server, no accounts and
@@ -39,11 +39,11 @@ qualities are grouped into one row with quality chips.
 
 <img src="docs/screenshots/live-channels-screen.png" width="100%" alt="Three-pane live TV browser with inline preview">
 
-- **Browse** — fixed no-scroll landscape dashboard: gradient hero cards with live catalogue counts,
+- **Browse**: fixed no-scroll landscape dashboard: gradient hero cards with live catalogue counts,
   a continue-watching rail, provider status in the header
-- **Movies / Series** — self-measuring poster grid that fits exactly three rows at any screen size,
+- **Movies / Series**: self-measuring poster grid that fits exactly three rows at any screen size,
   with marquee-scrolling titles
-- **Catch-Up TV** — replays already-aired programmes per channel and per day, where the provider
+- **Catch-Up TV**: replays already-aired programmes per channel and per day, where the provider
   exposes an archive
 - **Favourites** and **Recently watched** as virtual first categories in each section
 - Section-scoped and global search, sort (A–Z / newest / rating), and long-press to hide the junk
@@ -70,7 +70,7 @@ live through a patched libVLC binding.
 <img src="docs/screenshots/player-tracks-panel.png" width="100%" alt="Subtitle and audio track selection panel">
 
 <details>
-<summary><b>More screens</b> — login, playlists, movies, series, catch-up, profile</summary>
+<summary><b>More screens</b>: login, playlists, movies, series, catch-up, profile</summary>
 
 <br>
 
@@ -108,7 +108,7 @@ live through a patched libVLC binding.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  React Native (Expo SDK 54) — landscape Android app          │
+│  React Native (Expo SDK 54): landscape Android app           │
 │                                                              │
 │  ┌────────────┐   ┌──────────────┐   ┌────────────────────┐  │
 │  │ Screens    │──▶│ AuthContext  │   │ theme.js           │  │
@@ -127,7 +127,7 @@ live through a patched libVLC binding.
 │  │ (patched)              │   │ picture-in-picture         │ │
 │  └────────────────────────┘   └────────────────────────────┘ │
 └───────────────┬──────────────────────────────────────────────┘
-                │  HTTP/HTTPS — player_api.php, .m3u, .ts/.mp4
+                │  HTTP/HTTPS: player_api.php, .m3u, .ts/.mp4
                 ▼
       ┌──────────────────────┐
       │ User's IPTV provider │
@@ -154,7 +154,7 @@ and works largely offline.
 carries a `direct_url` per row. Both normalise into the same tables, so every screen, search,
 favourite and sort works identically across protocols.
 
-**The provider is untrusted input.** IPTV panels are inconsistent — base64-encoded EPG text, missing
+**The provider is untrusted input.** IPTV panels are inconsistent: base64-encoded EPG text, missing
 fields, expired TLS certificates, empty season lists, the same channel listed three times at
 different qualities. Parsing is defensive throughout.
 
@@ -194,7 +194,7 @@ one logical channel and exposes the variants for in-player quality switching, co
 Two measured problems, both fixed at the root.
 
 **Catalogue writes were blocking the JS thread.** Sync inserted row by row, one JS↔native
-round-trip per row — over 40,000 blocking calls on a large provider, freezing the UI for about
+round-trip per row, over 40,000 blocking calls on a large provider, freezing the UI for about
 53 seconds. It surfaced as React Native's `VirtualizedList` slow-update warning with `dt: 53673`.
 Rewritten to batch rows into multi-`VALUES` statements sized to stay under SQLite's bound-parameter
 limit (`floor(900 / columnsPerRow)`, so roughly 80–100 rows per statement and ~250 calls total),
@@ -213,7 +213,7 @@ paging neither rescans nor re-sorts.
 
 ## Native work
 
-**Custom Expo module — `modules/pip`** (142 lines of Kotlin). Expo provides no picture-in-picture
+**Custom Expo module, `modules/pip`** (142 lines of Kotlin). Expo provides no picture-in-picture
 API, so this exposes one: `enterPip(isPlaying)`, `updatePipActions(isPlaying)`, `isSupported()`.
 Activity APIs are marshalled onto the UI thread, because calling them from Expo's module queue
 throws and terminates the app. The PiP window's play/pause button is a `RemoteAction` backed by a
@@ -221,19 +221,19 @@ throws and terminates the app. The PiP window's play/pause button is a `RemoteAc
 updated params are pushed back so the icon flips. API-level and OEM capability checks degrade
 gracefully rather than throwing.
 
-**Config plugin — `plugins/with-vlc-media-player.js`.** Injects manifest configuration at prebuild
+**Config plugin, `plugins/with-vlc-media-player.js`.** Injects manifest configuration at prebuild
 time: cleartext traffic (most IPTV panels are plain HTTP), the Google Cast options provider
 (replacing a community plugin pinned to an incompatible Expo version), PiP flags, resizeable
 activity, and the config-change list PiP requires.
 
-**Upstream patches — `patches/react-native-vlc-media-player+1.0.98.patch`.** One patch file, two
+**Upstream patches, `patches/react-native-vlc-media-player+1.0.98.patch`.** One patch file, two
 fixes, across three library source files:
 
 1. *Subtitle delay API.* The library exposes no subtitle timing control. The patch threads a
    `subtitleDelay` prop through the view manager to `IVLCVout`'s `setSpuDelay`.
 2. *Crash fix.* `onHostPause` called `pause()` on a released native player, throwing
    `IllegalStateException: can't get VLCObject instance` and killing the process every time the
-   activity paused — reproducible on every entry into picture-in-picture. Patched to check
+   activity paused, reproducible on every entry into picture-in-picture. Patched to check
    `isReleased()` and catch failures, in both `onHostPause` and `onHostResume`.
 
 That second one produced no JavaScript error and no obvious native trace, only
@@ -247,8 +247,8 @@ and locating the `AndroidRuntime` frame, which pointed at library code rather th
 IPTV providers are unreliable, and the app assumes it:
 
 - **Scheme fallback.** Any failed request is retried once over the opposite scheme (`https`↔`http`).
-  Panels are routinely served with expired certificates — a browser lets you click through, `fetch`
-  cannot — so this turns a hard failure into a working connection.
+  Panels are routinely served with expired certificates, and a browser lets you click through
+  where `fetch` cannot, so this turns a hard failure into a working connection.
 - **User-agent spoofing.** Some panels reject React Native's default user-agent; requests identify
   as VLC.
 - **Actionable errors.** "Network request failed" is replaced with the actual cause and a next step:
@@ -347,7 +347,7 @@ npx expo run:android -d         # build, install and run on a connected device
 **Requirements:** Node 18+, JDK 17, Android SDK, a device or emulator on API 26+ (minSdk 26 for
 libVLC). Expo Go is not supported; the custom native module and libVLC need a development build.
 
-On first launch, add a playlist — Xtream host, username and password, or an M3U URL — then run a
+On first launch, add a playlist (Xtream host, username and password, or an M3U URL), then run a
 catalogue sync. Or tap **Explore with a demo catalogue** to skip that entirely.
 
 **Release APK:**
@@ -367,14 +367,14 @@ large set of decoders per ABI.
 | --- | --- |
 | Framework | React Native 0.81 / Expo SDK 54, React 19 |
 | Language | JavaScript (app), Kotlin (native module), Java (library patches) |
-| Navigation | React Navigation 7 — bottom tabs and native stack |
+| Navigation | React Navigation 7, bottom tabs and native stack |
 | Storage | `expo-sqlite` (catalogue), `expo-secure-store` (credentials) |
 | Playback | `react-native-vlc-media-player` (libVLC), patched |
 | Casting | `react-native-google-cast` |
 | UI | `expo-linear-gradient`, `@expo/vector-icons`, custom theme |
 | Native tooling | Custom Expo module, Expo config plugin, `patch-package` |
 | Protocols | Xtream Codes API, M3U/M3U8, XMLTV-derived EPG, HLS/MPEG-TS |
-| CI | GitHub Actions — install, patch application, static parse check |
+| CI | GitHub Actions: install, patch application, static parse check |
 | Build | Gradle, Expo prebuild |
 
 ---
@@ -391,8 +391,8 @@ navigation/            Auth gate, tabs, browse stack
 screens/               13 screens
 services/              Xtream API client, M3U parser, catalogue sync, demo catalogue
 utils/                 Quality-variant grouping, EPG text decoding
-modules/pip/           Custom Kotlin native module — picture-in-picture
-plugins/               Expo config plugin — manifest configuration
+modules/pip/           Custom Kotlin native module, picture-in-picture
+plugins/               Expo config plugin, manifest configuration
 patches/               Upstream libVLC wrapper fixes
 docs/screenshots/      Screenshots used in this README
 ```
@@ -401,8 +401,8 @@ docs/screenshots/      Screenshots used in this README
 
 ## Author
 
-Cathal Hardy — BEng (Hons) Software & Electronic Engineering, Atlantic Technological University
+Cathal Hardy, BEng (Hons) Software & Electronic Engineering, Atlantic Technological University
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
