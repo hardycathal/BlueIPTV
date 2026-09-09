@@ -78,7 +78,9 @@ export function AuthProvider({ children }) {
         if (active && !list.some((p) => p.id === active)) active = list[0]?.id ?? null;
 
         const activePl = list.find((p) => p.id === active);
-        if (activePl && activePl.type !== 'm3u') xtreamApi.setXtreamCreds(activePl);
+        if (activePl && activePl.type !== 'm3u' && activePl.type !== 'demo') {
+          xtreamApi.setXtreamCreds(activePl);
+        }
 
         setPlaylists(list);
         setActiveId(active);
@@ -99,8 +101,11 @@ export function AuthProvider({ children }) {
 
   async function activate(playlist) {
     await resetDb().catch((e) => console.warn('resetDb failed', e));
-    if (playlist && playlist.type !== 'm3u') xtreamApi.setXtreamCreds(playlist);
-    else xtreamApi.clearXtreamCreds();
+    if (playlist && playlist.type !== 'm3u' && playlist.type !== 'demo') {
+      xtreamApi.setXtreamCreds(playlist);
+    } else {
+      xtreamApi.clearXtreamCreds();
+    }
   }
 
   // Add a playlist. Caller should have validated it first (xtreamApi.authPing
@@ -108,7 +113,13 @@ export function AuthProvider({ children }) {
   //   Xtream: { type?: 'xtream', name?, host, username, password }
   //   M3U:    { type: 'm3u', name?, url }
   async function addPlaylist(p, { makeActive = false } = {}) {
-    const playlist = p.type === 'm3u'
+    const playlist = p.type === 'demo'
+      ? {
+          id: makeId(),
+          type: 'demo',
+          name: (p.name || '').trim() || 'Demo catalogue',
+        }
+      : p.type === 'm3u'
       ? {
           id: makeId(),
           type: 'm3u',

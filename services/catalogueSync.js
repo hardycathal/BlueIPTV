@@ -11,6 +11,7 @@
 import xtream from './xtreamApi';
 import * as iptv from '../database/iptv';
 import { fetchM3uText, parseM3u, isVodUrl, containerFromUrl } from './m3u';
+import * as demo from './demoData';
 
 /**
  * Run a full catalogue sync, reporting progress via the supplied callback.
@@ -24,6 +25,7 @@ import { fetchM3uText, parseM3u, isVodUrl, containerFromUrl } from './m3u';
 export async function runFullSync(onProgress = () => {}, playlist = null) {
   const report = (step, label, percent, code = null) => onProgress({ step, label, percent, code });
 
+  if (playlist?.type === 'demo') return runDemoSync(report);
   if (playlist?.type === 'm3u') return runM3uSync(playlist, report);
 
   try {
@@ -68,6 +70,70 @@ export async function runFullSync(onProgress = () => {}, playlist = null) {
     report('done', 'Catalogue ready', 100);
   } catch (err) {
     report('error', err?.message || 'Sync failed', 0, err?.code || null);
+    throw err;
+  }
+}
+
+/**
+ * Demo sync: seeds a synthetic catalogue with neutral placeholder names.
+ *
+ * Touches no network and needs no provider. It writes through the same bulk
+ * writers the real syncs use, so every screen afterwards is reading genuine
+ * SQLite rows rather than mocked component state — which is the point: it
+ * exercises the real code path, and it makes the app screenshottable and
+ * manually testable without pointing it at somebody's live subscription.
+ */
+async function runDemoSync(report) {
+  try {
+    report('init', 'Preparing local database', 0);
+    await iptv.initDb();
+
+    report('live_cats', 'Building demo categories', 10);
+    await iptv.replaceCategories('live', demo.demoLiveCategories());
+
+    report('live_streams', 'Building demo channels', 25);
+    const liveStreams = demo.demoLiveStreams();
+    await iptv.replaceLiveStreams(liveStreams);
+
+    report('vod_cats', 'Building demo movie categories', 45);
+    await iptv.replaceCategories('vod', demo.demoVodCategories());
+
+    report('vod_streams', 'Building demo movies', 55);
+    await iptv.replaceVodStreams(demo.demoVodStreams());
+
+    report('series_cats', 'Building demo series categories', 70);
+    await iptv.replaceCategories('series', demo.demoSeriesCategories());
+
+    report('series', 'Building demo series', 78);
+    const seriesList = demo.demoSeries();
+    await iptv.replaceSeries(seriesList);
+
+    // Seasons and episodes are normally fetched lazily per series. Seed the
+    // first few up front so series browsing is populated straight away; the
+    // rest fill in on demand through the usual ensureSeriesInfo path.
+    report('series', 'Building demo episodes', 86);
+    for (const s of seriesList.slice(0, 8)) {
+      await iptv.saveSeriesInfo(s.series_id, demo.demoSeriesInfo(s.series_id));
+    }
+
+    report('series', 'Building demo programme guide', 92);
+    for (let i = 0; i < Math.min(liveStreams.length, 30); i += 1) {
+      const ch = liveStreams[i];
+      await iptv.replaceEpgForChannel(ch.epg_channel_id, demo.demoEpgForChannel(i + 1));
+    }
+
+    report('series', 'Adding demo favourites and progress', 97);
+    for (const [type, id] of demo.demoFavourites()) {
+      await iptv.addFavourite(type, id);
+    }
+    for (const [type, id, pos, dur] of demo.demoProgress()) {
+      await iptv.saveProgress(type, id, pos, dur);
+    }
+
+    await iptv.setSyncMeta('last_full_sync_at', Date.now());
+    report('done', 'Demo catalogue ready', 100);
+  } catch (err) {
+    report('error', err?.message || 'Demo sync failed', 0);
     throw err;
   }
 }
