@@ -1,8 +1,8 @@
 # BlueIPTV
 
 An Android IPTV player built with React Native and Expo, targeting tablets and phones in
-landscape. It connects to a user's own IPTV provider — an **Xtream Codes** account or a plain
-**M3U playlist** — mirrors that provider's catalogue into on-device **SQLite**, and plays streams
+landscape. It connects to a user's own IPTV provider (an **Xtream Codes** account or a plain
+**M3U playlist**), mirrors that provider's catalogue into on-device **SQLite**, and plays streams
 through a patched **libVLC** backend.
 
 The defining decision is that the app is **fully client-side**. There is no server, no accounts and
@@ -13,16 +13,10 @@ S3 backend as a credential vault; it was deliberately deleted (see
 **~6,650 lines across 28 source files**, plus a custom Kotlin native module, an Expo config plugin,
 and two patches to an upstream library.
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     SCREENSHOT 1 — HERO. Goes immediately below, before "Features".
-     Capture: the Home dashboard in landscape, with the Continue-watching rail
-     populated and the provider status visible in the header.
-     This is the single most important image: it is what a reviewer sees first.
-     Width 100%, full-bleed. Replace the line below with:
-       <img src="docs/screenshots/home.png" width="100%" alt="Home dashboard">
-     ═══════════════════════════════════════════════════════════════════════════ -->
+<img src="docs/screenshots/browse-screen.png" width="100%" alt="Browse dashboard with catalogue counts">
 
-*[SCREENSHOT 1 — Home dashboard goes here]*
+> All screenshots use the built-in demo catalogue, so every name is a placeholder. See
+> [Demo mode](#demo-mode).
 
 ---
 
@@ -38,45 +32,75 @@ and two patches to an upstream library.
 - Installs from the previous single-account build migrate transparently on first launch
 
 **Browsing**
-- **Home** — fixed no-scroll landscape layout: gradient hero cards with live catalogue counts, a
-  continue-watching rail with progress bars, provider status in the header
-- **Live TV** — three-pane browser (categories → channels → preview player with EPG). Single tap
-  previews inline, double tap goes fullscreen
-- **Movies / Series** — self-measuring poster grid that fits exactly three rows at any screen size,
+
+Three-pane live TV: categories, channels, and a preview player with EPG. Single tap previews
+inline, double tap goes fullscreen. Channels that a provider lists several times at different
+qualities are grouped into one row with quality chips.
+
+<img src="docs/screenshots/live-channels-screen.png" width="100%" alt="Three-pane live TV browser with inline preview">
+
+- **Browse**: fixed no-scroll landscape dashboard: gradient hero cards with live catalogue counts,
+  a continue-watching rail, provider status in the header
+- **Movies / Series**: self-measuring poster grid that fits exactly three rows at any screen size,
   with marquee-scrolling titles
-- **Catch-Up TV** — replays already-aired programmes per channel and per day, where the provider
+- **Catch-Up TV**: replays already-aired programmes per channel and per day, where the provider
   exposes an archive
-- **EPG guide** — scrollable now/next grid across channels and time slots
 - **Favourites** and **Recently watched** as virtual first categories in each section
 - Section-scoped and global search, sort (A–Z / newest / rating), and long-press to hide the junk
   categories some providers ship by the hundred
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     SCREENSHOT 2 — LIVE TV. Goes immediately below.
-     Capture: the three-pane Live TV browser with a channel previewing inline
-     and EPG data visible. Shows the densest, most technically interesting screen.
-     Two-up with Screenshot 3, width ~48% each:
-       <img src="docs/screenshots/livetv.png" width="49%" alt="Live TV browser">
-       <img src="docs/screenshots/guide.png" width="49%" alt="EPG guide">
-     ═══════════════════════════════════════════════════════════════════════════ -->
+**Programme guide**
 
-*[SCREENSHOT 2 — Live TV three-pane browser | SCREENSHOT 3 — EPG guide, side by side]*
+A scrollable now/next grid across channels and time slots, with catch-up available inline on
+channels that support it.
+
+<img src="docs/screenshots/tv-guide-screen.png" width="100%" alt="EPG programme guide grid">
 
 **Playback**
 
-Subtitle and audio track selection with live sync offset, hold-to-2× speed, swipe-to-zap channels,
-next/previous episode across season boundaries, resume prompts, next-episode autoplay, sleep timer,
-live quality switching, Chromecast, and picture-in-picture.
+<img src="docs/screenshots/video-player-screen.png" width="100%" alt="Player with transport overlay">
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     SCREENSHOT 4 — PLAYER. Goes immediately below.
-     Capture: the player with the overlay visible — progress bar, skip controls,
-     and ideally the track-selection panel slid in showing subtitle/audio options.
-     This is the 1,145-line component; show that it looks like a real player.
-     Width 100%.
-     ═══════════════════════════════════════════════════════════════════════════ -->
+Custom overlay with auto-hide and tap-to-seek, hold-right-side for 2× speed, swipe-to-zap channels
+within a category, next/previous episode across season boundaries, resume prompts, next-episode
+autoplay, sleep timer, live quality switching, Chromecast, and picture-in-picture.
 
-*[SCREENSHOT 4 — Player with controls and track panel goes here]*
+Subtitle and audio tracks are selectable from a slide-in panel, with a subtitle sync offset applied
+live through a patched libVLC binding.
+
+<img src="docs/screenshots/player-tracks-panel.png" width="100%" alt="Subtitle and audio track selection panel">
+
+<details>
+<summary><b>More screens</b>: login, playlists, movies, series, catch-up, profile</summary>
+
+<br>
+
+**Login.** One form for both provider types, with the demo catalogue offered underneath.
+
+<img src="docs/screenshots/login-screen.png" width="100%" alt="Login screen">
+
+**Playlists.** Several saved providers, one active at a time.
+
+<img src="docs/screenshots/playlists-screen.png" width="100%" alt="Saved playlists">
+
+**Movies**, and a movie's detail sheet with lazily-fetched metadata.
+
+<img src="docs/screenshots/movies-screen.png" width="100%" alt="Movies poster grid">
+<img src="docs/screenshots/movie-details.png" width="100%" alt="Movie detail sheet">
+
+**Series**, and a series detail sheet with its season and episode tree.
+
+<img src="docs/screenshots/series-screen.png" width="100%" alt="Series poster grid">
+<img src="docs/screenshots/series-details.png" width="100%" alt="Series detail sheet with seasons and episodes">
+
+**Catch-Up TV**, per channel and per day.
+
+<img src="docs/screenshots/catch-up-tv-screen.png" width="100%" alt="Catch-up TV">
+
+**Profile**, with hidden-category restore and sign-out.
+
+<img src="docs/screenshots/profile-screen.png" width="100%" alt="Profile screen">
+
+</details>
 
 ---
 
@@ -84,7 +108,7 @@ live quality switching, Chromecast, and picture-in-picture.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  React Native (Expo SDK 54) — landscape Android app          │
+│  React Native (Expo SDK 54): landscape Android app           │
 │                                                              │
 │  ┌────────────┐   ┌──────────────┐   ┌────────────────────┐  │
 │  │ Screens    │──▶│ AuthContext  │   │ theme.js           │  │
@@ -103,7 +127,7 @@ live quality switching, Chromecast, and picture-in-picture.
 │  │ (patched)              │   │ picture-in-picture         │ │
 │  └────────────────────────┘   └────────────────────────────┘ │
 └───────────────┬──────────────────────────────────────────────┘
-                │  HTTP/HTTPS — player_api.php, .m3u, .ts/.mp4
+                │  HTTP/HTTPS: player_api.php, .m3u, .ts/.mp4
                 ▼
       ┌──────────────────────┐
       │ User's IPTV provider │
@@ -116,7 +140,7 @@ live quality switching, Chromecast, and picture-in-picture.
 | Navigation | `navigation/AppNavigator.js` | Auth gate, bottom tabs, browse stack; remounts on playlist switch |
 | State | `context/AuthContext.js` | Saved playlists, active selection, secure persistence, DB reset on switch |
 | Provider I/O | `services/xtreamApi.js`, `services/m3u.js` | HTTP clients, URL construction, response parsing, protocol quirks |
-| Orchestration | `services/catalogueSync.js` | Two sync strategies behind one progress-reporting interface |
+| Orchestration | `services/catalogueSync.js` | Three sync strategies behind one progress-reporting interface |
 | Persistence | `database/iptv.js` | Schema, migrations, batched bulk writers, 46 query helpers |
 | Native | `modules/pip`, `plugins/`, `patches/` | PiP module, build-time manifest config, upstream library fixes |
 
@@ -130,7 +154,7 @@ and works largely offline.
 carries a `direct_url` per row. Both normalise into the same tables, so every screen, search,
 favourite and sort works identically across protocols.
 
-**The provider is untrusted input.** IPTV panels are inconsistent — base64-encoded EPG text, missing
+**The provider is untrusted input.** IPTV panels are inconsistent: base64-encoded EPG text, missing
 fields, expired TLS certificates, empty season lists, the same channel listed three times at
 different qualities. Parsing is defensive throughout.
 
@@ -149,7 +173,7 @@ migrations.
 | `series`, `seasons`, `episodes` | Series tree, populated lazily per series |
 | `epg` | Cached programme guide, indexed by channel and time |
 | `favourites` | `(item_type, item_id)` across live/vod/series |
-| `continue_watching` | Resume positions with duration; drives the Home rail |
+| `continue_watching` | Resume positions with duration; drives the Browse rail |
 | `hidden_categories` | User-hidden categories, restorable |
 | `sync_meta` | Schema version and per-table sync timestamps |
 
@@ -170,7 +194,7 @@ one logical channel and exposes the variants for in-player quality switching, co
 Two measured problems, both fixed at the root.
 
 **Catalogue writes were blocking the JS thread.** Sync inserted row by row, one JS↔native
-round-trip per row — over 40,000 blocking calls on a large provider, freezing the UI for about
+round-trip per row, over 40,000 blocking calls on a large provider, freezing the UI for about
 53 seconds. It surfaced as React Native's `VirtualizedList` slow-update warning with `dt: 53673`.
 Rewritten to batch rows into multi-`VALUES` statements sized to stay under SQLite's bound-parameter
 limit (`floor(900 / columnsPerRow)`, so roughly 80–100 rows per statement and ~250 calls total),
@@ -189,7 +213,7 @@ paging neither rescans nor re-sorts.
 
 ## Native work
 
-**Custom Expo module — `modules/pip`** (142 lines of Kotlin). Expo provides no picture-in-picture
+**Custom Expo module, `modules/pip`** (142 lines of Kotlin). Expo provides no picture-in-picture
 API, so this exposes one: `enterPip(isPlaying)`, `updatePipActions(isPlaying)`, `isSupported()`.
 Activity APIs are marshalled onto the UI thread, because calling them from Expo's module queue
 throws and terminates the app. The PiP window's play/pause button is a `RemoteAction` backed by a
@@ -197,19 +221,19 @@ throws and terminates the app. The PiP window's play/pause button is a `RemoteAc
 updated params are pushed back so the icon flips. API-level and OEM capability checks degrade
 gracefully rather than throwing.
 
-**Config plugin — `plugins/with-vlc-media-player.js`.** Injects manifest configuration at prebuild
+**Config plugin, `plugins/with-vlc-media-player.js`.** Injects manifest configuration at prebuild
 time: cleartext traffic (most IPTV panels are plain HTTP), the Google Cast options provider
 (replacing a community plugin pinned to an incompatible Expo version), PiP flags, resizeable
 activity, and the config-change list PiP requires.
 
-**Upstream patches — `patches/react-native-vlc-media-player+1.0.98.patch`.** One patch file, two
+**Upstream patches, `patches/react-native-vlc-media-player+1.0.98.patch`.** One patch file, two
 fixes, across three library source files:
 
 1. *Subtitle delay API.* The library exposes no subtitle timing control. The patch threads a
    `subtitleDelay` prop through the view manager to `IVLCVout`'s `setSpuDelay`.
 2. *Crash fix.* `onHostPause` called `pause()` on a released native player, throwing
    `IllegalStateException: can't get VLCObject instance` and killing the process every time the
-   activity paused — reproducible on every entry into picture-in-picture. Patched to check
+   activity paused, reproducible on every entry into picture-in-picture. Patched to check
    `isReleased()` and catch failures, in both `onHostPause` and `onHostResume`.
 
 That second one produced no JavaScript error and no obvious native trace, only
@@ -223,8 +247,8 @@ and locating the `AndroidRuntime` frame, which pointed at library code rather th
 IPTV providers are unreliable, and the app assumes it:
 
 - **Scheme fallback.** Any failed request is retried once over the opposite scheme (`https`↔`http`).
-  Panels are routinely served with expired certificates — a browser lets you click through, `fetch`
-  cannot — so this turns a hard failure into a working connection.
+  Panels are routinely served with expired certificates, and a browser lets you click through
+  where `fetch` cannot, so this turns a hard failure into a working connection.
 - **User-agent spoofing.** Some panels reject React Native's default user-agent; requests identify
   as VLC.
 - **Actionable errors.** "Network request failed" is replaced with the actual cause and a next step:
@@ -249,6 +273,23 @@ IPTV providers are unreliable, and the app assumes it:
 **This repository contains no credentials, no API keys and no provider URLs.** The app ships with no
 sources of any kind. It is a client: without your own subscription or playlist it does nothing, in
 the same way VLC does nothing without a file.
+
+---
+
+## Demo mode
+
+Every screenshot above was taken against a built-in demo catalogue rather than a real subscription,
+which is also how the app can be explored and manually tested without a provider.
+
+Selecting **"Explore with a demo catalogue"** on the login screen seeds a synthetic catalogue with
+neutral placeholder names: 6 live categories and 60 channels, 90 movies, 40 series with seasons and
+episodes, a programme guide, favourites, and part-watched items.
+
+It writes through the *same* bulk writers the real sync uses, so every screen renders from genuine
+SQLite reads rather than mocked component state. The demo exercises the real code path, not a
+parallel one.
+
+See [`DEMO_MODE.md`](DEMO_MODE.md) for how it is wired.
 
 ---
 
@@ -303,11 +344,11 @@ npx expo prebuild --clean       # regenerates android/ from app.json + plugins
 npx expo run:android -d         # build, install and run on a connected device
 ```
 
-**Requirements:** Node 18+, Android SDK, a device or emulator on API 26+ (minSdk 26 for libVLC).
-Expo Go is not supported; the custom native module and libVLC need a development build.
+**Requirements:** Node 18+, JDK 17, Android SDK, a device or emulator on API 26+ (minSdk 26 for
+libVLC). Expo Go is not supported; the custom native module and libVLC need a development build.
 
-On first launch, add a playlist — Xtream host, username and password, or an M3U URL — then run a
-catalogue sync.
+On first launch, add a playlist (Xtream host, username and password, or an M3U URL), then run a
+catalogue sync. Or tap **Explore with a demo catalogue** to skip that entirely.
 
 **Release APK:**
 
@@ -326,14 +367,14 @@ large set of decoders per ABI.
 | --- | --- |
 | Framework | React Native 0.81 / Expo SDK 54, React 19 |
 | Language | JavaScript (app), Kotlin (native module), Java (library patches) |
-| Navigation | React Navigation 7 — bottom tabs and native stack |
+| Navigation | React Navigation 7, bottom tabs and native stack |
 | Storage | `expo-sqlite` (catalogue), `expo-secure-store` (credentials) |
 | Playback | `react-native-vlc-media-player` (libVLC), patched |
 | Casting | `react-native-google-cast` |
 | UI | `expo-linear-gradient`, `@expo/vector-icons`, custom theme |
 | Native tooling | Custom Expo module, Expo config plugin, `patch-package` |
 | Protocols | Xtream Codes API, M3U/M3U8, XMLTV-derived EPG, HLS/MPEG-TS |
-| CI | GitHub Actions — install, patch application, static parse check |
+| CI | GitHub Actions: install, patch application, static parse check |
 | Build | Gradle, Expo prebuild |
 
 ---
@@ -348,20 +389,20 @@ context/AuthContext.js Saved playlists, active selection, secure persistence
 database/iptv.js       SQLite schema, migrations, batched writers, 46 query helpers
 navigation/            Auth gate, tabs, browse stack
 screens/               13 screens
-services/              Xtream API client, M3U parser, catalogue sync
+services/              Xtream API client, M3U parser, catalogue sync, demo catalogue
 utils/                 Quality-variant grouping, EPG text decoding
-modules/pip/           Custom Kotlin native module — picture-in-picture
-plugins/               Expo config plugin — manifest configuration
+modules/pip/           Custom Kotlin native module, picture-in-picture
+plugins/               Expo config plugin, manifest configuration
 patches/               Upstream libVLC wrapper fixes
+docs/screenshots/      Screenshots used in this README
 ```
 
 ---
 
 ## Author
 
-Cathal Hardy — BEng (Hons) Software & Electronic Engineering, Atlantic Technological University
-
+Cathal Hardy, BEng (Hons) Software & Electronic Engineering, Atlantic Technological University
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

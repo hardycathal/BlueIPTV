@@ -5,7 +5,7 @@
 // added later from the Playlists tab.
 
 import { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import AuthForm from '../components/AuthForm';
 import xtreamApi from '../services/xtreamApi';
 import { validateM3u } from '../services/m3u';
@@ -65,13 +65,46 @@ export default function LoginScreen() {
     }
   }
 
+  // Loads a synthetic catalogue so the app can be explored, screenshotted and
+  // manually tested without a provider subscription. See services/demoData.js.
+  async function handleDemo() {
+    setLoading(true);
+    try {
+      await addPlaylist({ type: 'demo', name: 'Demo catalogue' }, { makeActive: true });
+    } catch (err) {
+      Alert.alert('Could not load demo', String(err.message ?? err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <AuthForm
-      title="IPTV"
+      title="BlueIPTV"
       submitLabel="Connect"
       loading={loading}
       includeName
       onSubmit={handleConnect}
+      footer={
+        <TouchableOpacity style={s.demoBtn} onPress={handleDemo} disabled={loading}>
+          <Text style={s.demoText}>Explore with a demo catalogue</Text>
+          <Text style={s.demoHint}>No provider needed. Placeholder content only.</Text>
+        </TouchableOpacity>
+      }
     />
   );
 }
+
+const s = StyleSheet.create({
+  demoBtn: {
+    marginTop: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(184,205,232,0.35)',
+    alignItems: 'center',
+  },
+  demoText: { color: '#B8CDE8', fontSize: 15, fontWeight: '600' },
+  demoHint: { color: 'rgba(184,205,232,0.6)', fontSize: 12, marginTop: 3 },
+});

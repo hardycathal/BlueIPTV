@@ -30,6 +30,47 @@ export function clearXtreamCreds() {
   _host = _user = _pass = null;
 }
 
+// ---------------------------------------------------------------------------
+// Demo mode.
+//
+// The 'demo' playlist type has no provider, so any call that would hit the
+// network has to be answered locally instead. Handling it here rather than in
+// each screen keeps the seam in one place: screens carry on calling
+// xtreamApi.getShortEpg() and xtreamApi.authPing() exactly as they do for a
+// real provider, and get provider-shaped responses back.
+// ---------------------------------------------------------------------------
+let _demo = false;
+
+export function setDemoMode(on) {
+  _demo = !!on;
+  if (_demo) _host = _user = _pass = null;
+}
+
+export function isDemoMode() {
+  return _demo;
+}
+
+// Provider-shaped short-EPG payload: a 45-minute grid centred on now, so
+// now/next is always populated. Titles are plain text; the app's decoder
+// passes non-base64 strings through unchanged.
+function demoShortEpg(streamId, limit) {
+  const stride = 45 * 60;
+  const now = Math.floor(Date.now() / 1000);
+  const start0 = now - stride - (now % stride);
+  const count = Math.max(1, Number(limit) || 4);
+  const epg_listings = Array.from({ length: count }, (_, i) => {
+    const start = start0 + i * stride;
+    return {
+      id: `demo_epg_${streamId}_${i}`,
+      start_timestamp: String(start),
+      stop_timestamp: String(start + stride),
+      title: `Programme ${i + 1}`,
+      description: `Placeholder programme description for ${streamId}.`,
+    };
+  });
+  return { epg_listings };
+}
+
 export function getXtreamCreds() {
   return { host: _host, username: _user, password: _pass };
 }
@@ -94,6 +135,17 @@ async function getJSON(url, { timeoutMs = 45000 } = {}) {
 
 // ---- account info ----
 export async function authPing() {
+  if (_demo) {
+    return {
+      user_info: {
+        auth: 1,
+        status: 'Demo',
+        exp_date: null,
+        is_trial: '0',
+        max_connections: '1',
+      },
+    };
+  }
   const data = await getJSON(apiUrl());
   if (!data?.user_info || Number(data.user_info.auth) !== 1) {
     throw new Error('Your provider rejected these credentials. Check the username and password.');
@@ -178,6 +230,7 @@ export async function getSeriesInfo(seriesId) {
 
 // ---- EPG ----
 export async function getShortEpg(streamId, limit = 4) {
+  if (_demo) return demoShortEpg(streamId, limit);
   return getJSON(apiUrl({ action: 'get_short_epg', stream_id: String(streamId), limit }));
 }
 // Full EPG table for one channel — includes past programmes with
@@ -225,6 +278,7 @@ export function timeshiftUrl(streamId, startTs, durationMinutes) {
 
 export default {
   setXtreamCreds, clearXtreamCreds, getXtreamCreds,
+  setDemoMode, isDemoMode,
   authPing, accountState, checkAccount,
   getLiveCategories, getVodCategories, getSeriesCategories,
   getLiveStreams, getVodStreams, getSeries,
