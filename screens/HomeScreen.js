@@ -34,7 +34,7 @@ export default function HomeScreen({ navigation }) {
       getCatalogueCounts().then((c) => { if (!cancelled) setCounts(c); }).catch(() => {});
       listContinueWatchingDetailed(12).then((rows) => { if (!cancelled) setResume(rows); }).catch(() => {});
       if (activePlaylist?.type === 'm3u') {
-        setAccount(null); // M3U playlists have no account API to ping
+        setAccount(null); // M3U and demo playlists have no account API to ping
       } else {
         xtreamApi.authPing()
           .then((data) => { if (!cancelled) setAccount(data.user_info || 'offline'); })
@@ -45,8 +45,11 @@ export default function HomeScreen({ navigation }) {
   );
 
   const isM3u = activePlaylist?.type === 'm3u';
+  const isDemo = activePlaylist?.type === 'demo';
   const online = account && account !== 'offline';
-  const statusLabel = isM3u
+  const statusLabel = isDemo
+    ? 'Demo'
+    : isM3u
     ? 'M3U'
     : online
       ? (String(account.status || 'Active'))
@@ -93,8 +96,8 @@ export default function HomeScreen({ navigation }) {
             <Text style={s.playlistName} numberOfLines={1}>{activePlaylist?.name ?? ''}</Text>
             {statusLabel ? (
               <View style={s.statusChip}>
-                <View style={[s.statusDot, { backgroundColor: isM3u ? C.blue : online ? C.green : C.danger }]} />
-                <Text style={[s.statusText, { color: isM3u ? C.blue : online ? C.green : C.danger }]}>{statusLabel}</Text>
+                <View style={[s.statusDot, { backgroundColor: (isM3u || isDemo) ? C.blue : online ? C.green : C.danger }]} />
+                <Text style={[s.statusText, { color: (isM3u || isDemo) ? C.blue : online ? C.green : C.danger }]}>{statusLabel}</Text>
               </View>
             ) : null}
             {expiryLabel ? (

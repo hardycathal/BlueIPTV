@@ -119,7 +119,8 @@ async function runDemoSync(report) {
     report('series', 'Building demo programme guide', 92);
     for (let i = 0; i < Math.min(liveStreams.length, 30); i += 1) {
       const ch = liveStreams[i];
-      await iptv.replaceEpgForChannel(ch.epg_channel_id, demo.demoEpgForChannel(i + 1));
+      // Keyed by stream_id: that is the key EpgGuideScreen reads back by.
+      await iptv.replaceEpgForChannel(ch.stream_id, demo.demoEpgForChannel(i + 1));
     }
 
     report('series', 'Adding demo favourites and progress', 97);

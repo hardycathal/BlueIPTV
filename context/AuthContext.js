@@ -78,6 +78,7 @@ export function AuthProvider({ children }) {
         if (active && !list.some((p) => p.id === active)) active = list[0]?.id ?? null;
 
         const activePl = list.find((p) => p.id === active);
+        xtreamApi.setDemoMode(activePl?.type === 'demo');
         if (activePl && activePl.type !== 'm3u' && activePl.type !== 'demo') {
           xtreamApi.setXtreamCreds(activePl);
         }
@@ -101,6 +102,7 @@ export function AuthProvider({ children }) {
 
   async function activate(playlist) {
     await resetDb().catch((e) => console.warn('resetDb failed', e));
+    xtreamApi.setDemoMode(playlist?.type === 'demo');
     if (playlist && playlist.type !== 'm3u' && playlist.type !== 'demo') {
       xtreamApi.setXtreamCreds(playlist);
     } else {
@@ -170,6 +172,7 @@ export function AuthProvider({ children }) {
   async function logout() {
     await SecureStore.deleteItemAsync(PLAYLISTS_KEY);
     await SecureStore.deleteItemAsync(ACTIVE_KEY);
+    xtreamApi.setDemoMode(false);
     xtreamApi.clearXtreamCreds();
     setPlaylists([]);
     setActiveId(null);
